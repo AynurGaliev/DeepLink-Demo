@@ -9,10 +9,10 @@
 import UIKit
 
 struct Movie {
-    var name: String
-    var description: String
-    var image: String
-    var genre: String
+    let name: String
+    let description: String
+    let image: String
+    let genre: String
     var isSelected: Bool = false
     
     init(name: String, genre: String, description: String, image: String) {
@@ -21,6 +21,13 @@ struct Movie {
         self.description = description
         self.image = image
     }
+}
+
+func ==(lhs: Movie, rhs: Movie) -> Bool {
+    return lhs.description == rhs.description &&
+                  lhs.name == rhs.name &&
+                 lhs.image == rhs.image &&
+                 lhs.genre == rhs.genre
 }
 
 var movies: [Movie] = []
@@ -34,6 +41,10 @@ final class ViewController: UIViewController {
         self.generateMovies()
         self.tableView.rowHeight = UITableViewAutomaticDimension
         self.tableView.estimatedRowHeight = 100
+        
+        let activity = NSUserActivity(activityType: Constants.mainUserActivity)
+        userActivity = activity
+        userActivity?.becomeCurrent()
     }
 
     override func viewWillLayoutSubviews() {
@@ -55,6 +66,23 @@ final class ViewController: UIViewController {
         movies.append(movie)
     }
     
+    override func updateUserActivityState(_ activity: NSUserActivity) {
+        let activeMovies = movies.filter { (movie) -> Bool in
+            return movie.isSelected
+        }
+        activity.addUserInfoEntries(from: [Constants.activeMoviesKey : activeMovies])
+        super.updateUserActivityState(activity)
+    }
+    
+    override func restoreUserActivityState(_ activity: NSUserActivity) {
+        guard let activeMovies = activity.userInfo?[Constants.activeMoviesKey] as? [Movie] else { return }
+        for i in 0..<movies.count {
+            movies[i].isSelected = activeMovies.contains(where: { (item) -> Bool in
+                return item == movies[i]
+            })
+        }
+        self.tableView.reloadData()
+    }
 }
 
 extension ViewController: UITableViewDataSource {
@@ -77,6 +105,7 @@ extension ViewController: UITableViewDataSource {
 extension ViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        self.updateUserActivityState(self.userActivity!)
         self.tableView.deselectRow(at: indexPath, animated: true)
         movies[indexPath.row].isSelected = !movies[indexPath.row].isSelected
         self.tableView.reloadRows(at: [indexPath], with: UITableViewRowAnimation.automatic)

@@ -8,6 +8,11 @@
 
 import UIKit
 
+struct Constants {
+    static let mainUserActivity: String = "com.flatstack.Movie"
+    static let activeMoviesKey: String = "ActiveMovies"
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -35,6 +40,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        return true
+    }
+    
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
+        
+        if let viewController = self.window?.rootViewController as? ViewController {
+            viewController.restoreUserActivityState(userActivity)
+        }
+        
         return true
     }
 }
